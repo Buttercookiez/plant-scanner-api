@@ -3,28 +3,37 @@ import numpy as np
 from PIL import Image
 import io
 import os
-import tensorflow as tf
 
 app = Flask(__name__)
 
-interpreter = tf.lite.Interpreter(model_path='plant_model.tflite')
-interpreter.allocate_tensors()
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-
 CLASS_NAMES = ['guava', 'oregano', 'unknown']
+
+# Load model lazily
+interpreter = None
+
+def get_interpreter():
+    global interpreter
+    if interpreter is None:
+        import tensorflow as tf
+        interpreter = tf.lite.Interpreter(model_path='plant_model.tflite')
+        interpreter.allocate_tensors()
+    return interpreter
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
+        interp = get_interpreter()
+        input_details = interp.get_input_details()
+        output_details = interp.get_output_details()
+
         img = Image.open(io.BytesIO(request.data)).convert('RGB').resize((224, 224))
         arr = np.array(img, dtype=np.float32) / 255.0
         arr = np.expand_dims(arr, axis=0)
 
-        interpreter.set_tensor(input_details[0]['index'], arr)
-        interpreter.invoke()
+        interp.set_tensor(input_details[0]['index'], arr)
+        interp.invoke()
 
-        output = interpreter.get_tensor(output_details[0]['index'])
+        output = interp.get_tensor(output_details[0]['index'])
         class_idx = int(np.argmax(output))
         confidence = float(np.max(output)) * 100
 
@@ -41,4 +50,4 @@ def health():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=False)
