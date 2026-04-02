@@ -3,16 +3,11 @@ import numpy as np
 from PIL import Image
 import io
 import os
-
-try:
-    from tflite_runtime.interpreter import Interpreter
-except ImportError:
-    import tensorflow as tf
-    Interpreter = tf.lite.Interpreter
+import tensorflow as tf
 
 app = Flask(__name__)
 
-interpreter = Interpreter(model_path='plant_model.tflite')
+interpreter = tf.lite.Interpreter(model_path='plant_model.tflite')
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
