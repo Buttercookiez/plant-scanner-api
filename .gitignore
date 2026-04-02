@@ -1,0 +1,15 @@
+venv/
+node_modules/
+__pycache__/
+*.pyc
+.expo/
+android/
+ios/
+myApp/
+PlantScanner/
+dataset-collection/
+dataset-split/
+plant_model_saved/
+plant_model_web/
+*.keras
+*.h5
